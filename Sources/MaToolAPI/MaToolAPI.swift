@@ -33,6 +33,12 @@ struct MaToolAPI {
                 headers: ["Content-Type": "application/json"],
                 body: bodyString
             )
+        } else if method == "GET" {
+            return APIGatewayV2Response(
+                statusCode: .ok,
+                headers: ["Content-Type": "application/json"],
+                body: #"{"message": "Hello World"}"#
+            )
         } else {
             return APIGatewayV2Response(
                 statusCode: .notFound,
