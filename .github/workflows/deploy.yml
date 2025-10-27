@@ -44,6 +44,17 @@ jobs:
             --function-name "$FUNCTION_NAME" \
             --zip-file fileb://lambda.zip
 
+          echo "Waiting for Lambda function update to complete..."
+          for i in {1..15}; do
+            STATUS=$(aws lambda get-function-configuration --function-name "$FUNCTION_NAME" --query 'State' --output text)
+            if [ "$STATUS" = "Active" ]; then
+              echo "Lambda is Active."
+              break
+            fi
+            echo "Still updating... ($i)"
+            sleep 5
+          done
+
           # 新しいバージョンを発行
           VERSION=$(aws lambda publish-version --function-name "$FUNCTION_NAME" --query 'Version' --output text)
           echo "Published new version: $VERSION"
