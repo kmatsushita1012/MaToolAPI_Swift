@@ -57,4 +57,4 @@ jobs:
           fi
 
       - name: Output Lambda Function Name
-        run: echo "Lambda function deployed: ${FUNCTION_NAME}"
+        run: echo "Lambda function deployed ${FUNCTION_NAME}"
