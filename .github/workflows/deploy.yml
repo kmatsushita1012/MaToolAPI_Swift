@@ -73,8 +73,9 @@ jobs:
             BRANCH=${GITHUB_REF_NAME//\//-}
             echo "Deploying API Gateway stage: $BRANCH"
 
-            # --- Lambda permission for API Gateway v2 ---
-            # v2ではsource-arnを省略してもOK
+            FUNCTION_NAME="MaToolAPIv2"
+            
+            # --- Add permission for API Gateway to invoke Lambda ---
             aws lambda add-permission \
               --function-name "$FUNCTION_NAME" \
               --statement-id "apigateway-v2-$BRANCH" \
