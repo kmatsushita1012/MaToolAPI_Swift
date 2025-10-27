@@ -63,9 +63,13 @@ jobs:
 
           echo "Lambda alias '$BRANCH' now points to version $VERSION"
 
-      - name: Deploy API Gateway Stage
+      - name: Deploy API Gateway
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          API_ID: ${{ secrets.API_GATEWAY_ID }}
         run: |
           BRANCH=${GITHUB_REF_NAME//\//-}
+          FUNCTION_NAME="MaToolAPIv2"
           echo "Deploying API Gateway stage: $BRANCH"
 
           # Lambda permission for API Gateway
