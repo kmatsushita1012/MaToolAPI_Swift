@@ -1,0 +1,60 @@
+name: Deploy Lambda
+
+on:
+  push:
+    branches:
+      - main
+      - release
+      - 'feature/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      LAMBDA_ROLE_ARN: ${{ secrets.LAMBDA_ROLE_ARN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Lambda binary with Dockerfile
+        run: |
+          docker build -t matoolapi .
+          docker create --name extract matoolapi
+          docker cp extract:/var/runtime/bootstrap ./bootstrap
+          docker rm extract
+          chmod +x bootstrap
+          zip lambda.zip bootstrap
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy Lambda Function
+        run: |
+          BRANCH=${GITHUB_REF_NAME//\//-}
+          FUNCTION_NAME="MaToolAPI-${BRANCH}"
+
+          echo "Deploying Lambda: $FUNCTION_NAME"
+
+          if aws lambda get-function --function-name "$FUNCTION_NAME" >/dev/null 2>&1; then
+            echo "Updating existing Lambda..."
+            aws lambda update-function-code \
+              --function-name "$FUNCTION_NAME" \
+              --zip-file fileb://lambda.zip
+          else
+            echo "Creating new Lambda..."
+            aws lambda create-function \
+              --function-name "$FUNCTION_NAME" \
+              --zip-file fileb://lambda.zip \
+              --handler not-used \
+              --runtime provided.al2023 \
+              --role $LAMBDA_ROLE_ARN
+          fi
+
+      - name: Output Lambda Function Name
+        run: echo "Lambda function deployed: ${FUNCTION_NAME}"

@@ -1,6 +1,15 @@
 {
-  "originHash" : "7881760d3168b6c1df6fa813c558c55042cd66bb12da5d755e579ec729a9e652",
+  "originHash" : "5f3b7a0f5ff39311e69d56aae419e6f5e1c3fe38954b1b98363d6e6dbebd0664",
   "pins" : [
+    {
+      "identity" : "swift-async-algorithms",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-async-algorithms.git",
+      "state" : {
+        "revision" : "042e1c4d9d19748c9c228f8d4ebc97bb1e339b0b",
+        "version" : "1.0.4"
+      }
+    },
     {
       "identity" : "swift-atomics",
       "kind" : "remoteSourceControl",
@@ -8,6 +17,15 @@
       "state" : {
         "revision" : "b601256eab081c0f92f059e12818ac1d4f178ff7",
         "version" : "1.3.0"
+      }
+    },
+    {
+      "identity" : "swift-aws-lambda-events",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swift-server/swift-aws-lambda-events.git",
+      "state" : {
+        "revision" : "a85c7a784692097c8eee441571cb5adae5d5b0cf",
+        "version" : "1.2.3"
       }
     },
     {
@@ -29,6 +47,15 @@
       }
     },
     {
+      "identity" : "swift-http-types",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-http-types.git",
+      "state" : {
+        "revision" : "a0a57e949a8903563aba4615869310c0ebf14c03",
+        "version" : "1.4.0"
+      }
+    },
+    {
       "identity" : "swift-log",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-log.git",
@@ -44,6 +71,15 @@
       "state" : {
         "revision" : "4e8f4b1c9adaa59315c523540c1ff2b38adc20a9",
         "version" : "2.87.0"
+      }
+    },
+    {
+      "identity" : "swift-service-lifecycle",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swift-server/swift-service-lifecycle.git",
+      "state" : {
+        "revision" : "0fcc4c9c2d58dd98504c06f7308c86de775396ff",
+        "version" : "2.9.0"
       }
     },
     {

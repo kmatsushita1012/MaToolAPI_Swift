@@ -5,6 +5,9 @@ import PackageDescription
 
 let package = Package(
     name: "MaToolAPI",
+    platforms: [
+        .macOS(.v15)
+    ],
     products: [
         // 本体ターゲットを実行可能として出力
         .executable(
@@ -14,6 +17,8 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/awslabs/swift-aws-lambda-runtime.git", from: "2.0.0"),
+        .package(url: "https://github.com/swift-server/swift-aws-lambda-events.git", from: "1.2.3"),
+        .package(url: "https://github.com/swift-server/swift-service-lifecycle.git", from: "2.9.0")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -21,7 +26,9 @@ let package = Package(
         .executableTarget(
             name: "MaToolAPI",
             dependencies: [
-                .product(name: "AWSLambdaRuntime", package: "swift-aws-lambda-runtime")
+                .product(name: "AWSLambdaRuntime", package: "swift-aws-lambda-runtime"),
+                .product(name: "AWSLambdaEvents", package: "swift-aws-lambda-events"),
+                .product(name: "ServiceLifecycle", package: "swift-service-lifecycle")
             ],
             path: "Sources/MaToolAPI"
         ),

@@ -1,0 +1,27 @@
+name: Clean Lambda Stage
+
+on:
+  delete:
+    branches:
+      - 'feature/**'
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Delete Lambda function
+        run: |
+          BRANCH=${GITHUB_REF_NAME//\//-}
+          FUNCTION_NAME="MaToolAPI-${BRANCH}"
+          echo "Deleting Lambda: $FUNCTION_NAME"
+          aws lambda delete-function --function-name "$FUNCTION_NAME" || echo "Nothing to delete"
