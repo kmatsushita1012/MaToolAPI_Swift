@@ -36,25 +36,66 @@ jobs:
 
       - name: Deploy Lambda Function
         run: |
-          BRANCH=${GITHUB_REF_NAME//\//-}
-          FUNCTION_NAME="MaToolAPI-${BRANCH}"
+          FUNCTION_NAME="MaToolAPIv2"
 
           echo "Deploying Lambda: $FUNCTION_NAME"
 
-          if aws lambda get-function --function-name "$FUNCTION_NAME" >/dev/null 2>&1; then
-            echo "Updating existing Lambda..."
-            aws lambda update-function-code \
+          aws lambda update-function-code \
+            --function-name "$FUNCTION_NAME" \
+            --zip-file fileb://lambda.zip
+
+          # 新しいバージョンを発行
+          VERSION=$(aws lambda publish-version --function-name "$FUNCTION_NAME" --query 'Version' --output text)
+          echo "Published new version: $VERSION"
+
+          # ブランチ名をエイリアスに紐付け
+          BRANCH=${GITHUB_REF_NAME//\//-}
+          aws lambda update-alias \
+            --function-name "$FUNCTION_NAME" \
+            --name "$BRANCH" \
+            --function-version "$VERSION" 2>/dev/null \
+            || aws lambda create-alias \
               --function-name "$FUNCTION_NAME" \
-              --zip-file fileb://lambda.zip
-          else
-            echo "Creating new Lambda..."
-            aws lambda create-function \
-              --function-name "$FUNCTION_NAME" \
-              --zip-file fileb://lambda.zip \
-              --handler not-used \
-              --runtime provided.al2023 \
-              --role $LAMBDA_ROLE_ARN
-          fi
+              --name "$BRANCH" \
+              --function-version "$VERSION"
+
+          echo "Lambda alias '$BRANCH' now points to version $VERSION"
+
+      - name: Deploy API Gateway Stage
+        run: |
+          BRANCH=${GITHUB_REF_NAME//\//-}
+          echo "Deploying API Gateway stage: $BRANCH"
+
+          # Lambda permission for API Gateway
+          aws lambda add-permission \
+            --function-name "$FUNCTION_NAME" \
+            --statement-id "apigateway-$BRANCH" \
+            --action lambda:InvokeFunction \
+            --principal apigateway.amazonaws.com \
+            --source-arn "arn:aws:execute-api:${AWS_REGION}:*:{{ secrets.API_GATEWAY_ID }}/*/*/*" \
+            || echo "Permission already exists"
+
+          # Update integration to target the alias ARN
+          FUNCTION_ALIAS_ARN=$(aws lambda get-alias \
+            --function-name "$FUNCTION_NAME" \
+            --name "$BRANCH" \
+            --query 'AliasArn' \
+            --output text)
+
+          # Update integration URI
+          RESOURCE_ID=$(aws apigateway get-resources --rest-api-id "$API_ID" --query "items[?path=='/{proxy+}'].id" --output text)
+          aws apigateway update-integration \
+            --rest-api-id "$API_ID" \
+            --resource-id "$RESOURCE_ID" \
+            --http-method ANY \
+            --patch-operations op=replace,path=/uri,value="arn:aws:apigateway:${AWS_REGION}:lambda:path/2015-03-31/functions/${FUNCTION_ALIAS_ARN}/invocations"
+
+          # Deploy API stage
+          aws apigateway create-deployment \
+            --rest-api-id "$API_ID" \
+            --stage-name "$BRANCH"
+
+          echo "✅ API Gateway deployed for stage: $BRANCH"
 
       - name: Output Lambda Function Name
         run: echo "Lambda function deployed ${FUNCTION_NAME}"

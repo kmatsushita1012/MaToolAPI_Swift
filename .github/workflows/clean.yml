@@ -19,9 +19,43 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Delete Lambda function
+      - name: Clean API Gateway stage, Lambda alias and versions
         run: |
           BRANCH=${GITHUB_REF_NAME//\//-}
-          FUNCTION_NAME="MaToolAPI-${BRANCH}"
-          echo "Deleting Lambda: $FUNCTION_NAME"
-          aws lambda delete-function --function-name "$FUNCTION_NAME" || echo "Nothing to delete"
+          echo "🧹 Cleaning up resources for feature branch: $BRANCH"
+
+          # --- API Gateway stage 削除 ---
+          echo "Deleting API Gateway stage: $BRANCH"
+          aws apigateway delete-stage \
+            --rest-api-id "$API_ID" \
+            --stage-name "$BRANCH" \
+            || echo "Stage not found"
+
+          # --- Lambda alias 削除 ---
+          echo "Deleting Lambda alias: $BRANCH"
+          aws lambda delete-alias \
+            --function-name "$FUNCTION_NAME" \
+            --name "$BRANCH" \
+            || echo "Alias not found"
+
+          # --- Lambda 古いバージョン削除（このブランチが作ったものを対象に） ---
+          echo "Listing Lambda versions..."
+          VERSIONS=$(aws lambda list-versions-by-function \
+            --function-name "$FUNCTION_NAME" \
+            --query 'Versions[?Version!="$LATEST"].Version' \
+            --output text)
+
+          echo "Found versions: $VERSIONS"
+          for VERSION in $VERSIONS; do
+            DESCRIPTION=$(aws lambda get-function \
+              --function-name "$FUNCTION_NAME:$VERSION" \
+              --query 'Configuration.Description' \
+              --output text || echo "")
+            # Description に branch 名が含まれている場合だけ削除
+            if [[ "$DESCRIPTION" == *"$BRANCH"* ]]; then
+              echo "Deleting version $VERSION (desc: $DESCRIPTION)"
+              aws lambda delete-function --function-name "$FUNCTION_NAME:$VERSION" || true
+            fi
+          done
+
+          echo "✅ Cleanup completed for $BRANCH"

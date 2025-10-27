@@ -7,7 +7,7 @@ WORKDIR /workspace
 
 # パッケージ依存解決
 COPY Package.swift .
-COPY Package.resolved . 2>/dev/null || true
+COPY Package.resolved ./
 RUN swift package resolve
 
 # ソースコードコピー
