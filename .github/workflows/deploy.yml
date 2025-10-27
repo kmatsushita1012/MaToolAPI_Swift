@@ -95,7 +95,6 @@ jobs:
             echo "Lambda alias ARN: $FUNCTION_ALIAS_ARN"
 
             # --- Update API Gateway v2 Integration ---
-            # v2ではintegration更新用のURI形式が違う
             aws apigatewayv2 update-integration \
               --api-id "$API_GATEWAY_ID" \
               --integration-id $(aws apigatewayv2 get-integrations \
@@ -107,12 +106,31 @@ jobs:
 
             echo "✅ Integration updated for Lambda alias"
 
-            # --- Deploy API Gateway Stage ---
-            aws apigatewayv2 create-deployment \
-              --api-id "$API_GATEWAY_ID" \
-              --stage-name "$BRANCH"
+            # --- Check if stage exists ---
+            STAGE_NAME="$BRANCH"
+            STAGE_EXISTS=$(aws apigatewayv2 get-stages --api-id "$API_GATEWAY_ID" \
+                            --query "Items[?StageName=='$STAGE_NAME'].StageName" \
+                            --output text)
 
-            echo "✅ API Gateway deployed for stage: $BRANCH"
+            if [ -z "$STAGE_EXISTS" ]; then
+              echo "Stage $STAGE_NAME does not exist. Creating..."
+              aws apigatewayv2 create-stage \
+                --api-id "$API_GATEWAY_ID" \
+                --stage-name "$STAGE_NAME" \
+                --deployment-id $(aws apigatewayv2 create-deployment \
+                                  --api-id "$API_GATEWAY_ID" \
+                                  --description "Deployment for $STAGE_NAME" \
+                                  --query 'DeploymentId' \
+                                  --output text)
+            else
+              echo "Stage $STAGE_NAME exists. Creating new deployment..."
+              aws apigatewayv2 create-deployment \
+                --api-id "$API_GATEWAY_ID" \
+                --stage-name "$STAGE_NAME" \
+                --description "Deployment for $STAGE_NAME"
+            fi
+
+            echo "✅ API Gateway stage deployed: $STAGE_NAME"
 
       - name: Output Lambda Function Name
         run: echo "Lambda function deployed ${FUNCTION_NAME}"
