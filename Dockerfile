@@ -1,7 +1,7 @@
 # ============================================================
 # Stage 1 — Build Swift Lambda binary (Amazon Linux 2)
 # ============================================================
-FROM swift:6.2.0-amazonlinux2 AS build
+FROM --platform=linux/amd64 swift:6.2.0-amazonlinux2 AS build
 
 WORKDIR /workspace
 
