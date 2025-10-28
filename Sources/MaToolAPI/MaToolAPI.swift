@@ -8,13 +8,15 @@ import Foundation
 @main
 struct MaToolAPI {
     static func main() async throws {
-        let runtime = LambdaRuntime {
-            (request: APIGatewayV2Request, context: LambdaContext) in
-            try await self.handler(request: request, context: context)
+        do {
+            let runtime = LambdaRuntime { (request: APIGatewayV2Request, context: LambdaContext) in
+                try await self.handler(request: request, context: context)
+            }
+            try await runtime.run()
+        } catch {
+            print("LambdaRuntime crashed: \(error)")
+            throw error
         }
-
-        // start the loop
-        try await runtime.run()
     }
 
     static func handler(request: APIGatewayV2Request, context: LambdaContext) async throws -> APIGatewayV2Response {
