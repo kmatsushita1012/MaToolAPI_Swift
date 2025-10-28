@@ -20,8 +20,14 @@ struct MaToolAPI {
     }
 
     static func handler(request: APIGatewayV2Request, context: LambdaContext) async throws -> APIGatewayV2Response {
-        let path = request.rawPath
         let method = request.context.http.method.rawValue
+        let stageName = request.context.stage
+        var path = request.rawPath
+
+        // ステージ名を自動で削除
+        if !stageName.isEmpty, path.hasPrefix("/\(stageName)") {
+            path = String(path.dropFirst(stageName.count + 1))
+        }
 
         // ルーティング: GET /name/{name}
         if method == "GET", path.hasPrefix("/name/") {
